@@ -26,7 +26,7 @@ An interactive Dash application for predicting nightly Airbnb prices in London b
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/london-airbnb-dashboard.git
+   git clone https://github.com/yonakie/london-airbnb-dashboard.git
    cd london-airbnb-dashboard
    ```
 
@@ -50,38 +50,6 @@ An interactive Dash application for predicting nightly Airbnb prices in London b
 
 6. Open [http://localhost:8050](http://localhost:8050) in your browser
 
-## Deployment to Render
-
-### Step 1: Prepare GitHub Repository
-
-```bash
-git init
-git add .
-git commit -m "Initial Dash dashboard deployment"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/london-airbnb-dashboard.git
-git push -u origin main
-```
-
-### Step 2: Connect to Render
-
-1. Sign in to [render.com](https://render.com) with GitHub
-2. Click **New +** → **Web Service**
-3. Select your `london-airbnb-dashboard` repository
-4. Render will auto-detect the `render.yaml` configuration
-5. Click **Create Web Service**
-
-### Step 3: Configure Environment
-
-- **Build Command:** (auto-detected) `pip install -r requirements.txt`
-- **Start Command:** (auto-detected) `gunicorn --workers 1 --threads 8 --worker-class gthread --timeout 0 --bind 0.0.0.0:$PORT app:server`
-- **Instance Type:** Free (or Paid for persistent deployment)
-
-### Step 4: Access Your Dashboard
-
-Once deployed, visit: `https://london-airbnb-dashboard.onrender.com`
-
-**Note:** Free tier services spin down after 15 minutes of inactivity, so the first load may take 20-30 seconds.
 
 ## File Structure
 
@@ -109,18 +77,11 @@ The dashboard currently uses a tuned XGBoost regressor trained on the 99th-perce
 
 LightGBM remains available as a backup artifact for side-by-side comparison.
 
-## Future Improvements
+<!-- ## Future Improvements
 
 - [ ] Season/month-based pricing adjustments
 - [ ] Calendar availability integration
 - [ ] Host performance tier predictions
 - [ ] Amenity-specific pricing breakdown
-- [ ] Geographic mapping (Folium integration)
+- [ ] Geographic mapping (Folium integration) -->
 
-## License
-
-MIT License — feel free to use and modify for your own projects.
-
-## Contact
-
-For questions or issues, please open a GitHub issue or contact the maintainer.
