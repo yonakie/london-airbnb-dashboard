@@ -16,8 +16,9 @@ import plotly.graph_objects as go
 from dash import Input, Output, State, dcc, html
 
 DATA_PATH = Path("listings.csv.gz")
-MODEL_PATH = Path("artifacts/rf_price_model.joblib")
-META_PATH = Path("artifacts/model_metadata.json")
+MODEL_PATH = Path(os.environ.get("MODEL_PATH", "artifacts/lgb_price_model.joblib"))
+META_PATH = Path(os.environ.get("META_PATH", "artifacts/lgb_model_metadata.json"))
+LEGACY_META_PATH = Path("artifacts/model_metadata.json")
 
 
 if not DATA_PATH.exists():
@@ -40,7 +41,9 @@ dashboard_df = dashboard_df.dropna(
 ).copy()
 
 
-if not MODEL_PATH.exists() or not META_PATH.exists():
+effective_meta_path = META_PATH if META_PATH.exists() else LEGACY_META_PATH
+
+if not MODEL_PATH.exists() or not effective_meta_path.exists():
     # 如果在Render上则创建公告
     if os.environ.get("RENDER"):
         raise FileNotFoundError(
@@ -49,11 +52,11 @@ if not MODEL_PATH.exists() or not META_PATH.exists():
         )
     raise FileNotFoundError(
         "Model artifacts are missing. Run the model export cell in the notebook first. "
-        f"Expected files: {MODEL_PATH.resolve()} and {META_PATH.resolve()}"
+        f"Expected files: {MODEL_PATH.resolve()} and {effective_meta_path.resolve()}"
     )
 
 model = joblib.load(MODEL_PATH)
-with open(META_PATH, "r", encoding="utf-8") as f:
+with open(effective_meta_path, "r", encoding="utf-8") as f:
     metadata = json.load(f)
 
 feature_columns = metadata["feature_columns"]
@@ -278,7 +281,7 @@ app.layout = html.Div(
             [
                 html.H1("London Airbnb Nightly Price Predictor", style={"marginBottom": "10px"}),
                 html.P(
-                    "This dashboard predicts nightly prices using the trained Random Forest model exported from the notebook.",
+                    "This dashboard predicts nightly prices using the trained LightGBM model exported from the notebook.",
                     style={"color": "#444", "fontSize": "14px", "marginBottom": "8px"},
                 ),
                 html.P(
