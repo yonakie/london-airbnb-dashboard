@@ -2,6 +2,10 @@
 
 An interactive Dash application for predicting nightly Airbnb prices in London based on neighbourhood, room type, and property characteristics.
 
+<span style="color:red"><b>
+When I attempted to deploy this project on Render, the platform consistently reported "Out of memory (used over 512Mi)" due to the size of my model file. As I don't want to delete any of my models or make my model smaller by cutting parameters and also I currently do not have the budget to upgrade to a premium Render plan, I kindly ask you to clone this project to your local machine and run <code>python app.py</code> in your terminal to view the dashboard on your localhost. Sorry for any inconvenience this may cause!
+</b></span>
+
 ## Features
 
 - **Interactive Filters** — Neighbourhood, room type, property type, bedrooms, and guest capacity selectors
