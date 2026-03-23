@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: london-airbnb-dashboard
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && mkdir -p artifacts
+    startCommand: gunicorn --workers 1 --threads 8 --worker-class gthread --timeout 0 --bind 0.0.0.0:${PORT:-8050} app:server
+    envVars:
+      - key: PORT
+        value: 8050

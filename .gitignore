@@ -1,0 +1,13 @@
+# Python 缓存和虚拟环境
+__pycache__/
+.venv/
+venv/
+*.pyc
+
+# Jupyter Notebook 缓存
+.ipynb_checkpoints/
+
+# 操作系统生成文件
+.DS_Store
+
+# 如果你的 listings.csv.gz 也超过了 100MB，也可以在这里忽略它（如果 Render 部署不需要的话）
