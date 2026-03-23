@@ -15,7 +15,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import Input, Output, State, dcc, html
 
-DATA_PATH = Path("listings.csv.gz")
+DATA_PATH = Path("app_data.csv.gz")
 MODEL_PATH = Path(os.environ.get("MODEL_PATH", "artifacts/xgb_price_model.joblib"))
 META_PATH = Path(os.environ.get("META_PATH", "artifacts/xgb_model_metadata.json"))
 XGB_META_PATH = Path(os.environ.get("XGB_META_PATH", "artifacts/xgb_model_metadata.json"))
@@ -24,7 +24,7 @@ LEGACY_META_PATH = Path("artifacts/model_metadata.json")
 
 if not DATA_PATH.exists():
     raise FileNotFoundError(
-        f"Data file not found: {DATA_PATH.resolve()}. Place listings.csv.gz in the app folder."
+        f"Data file not found: {DATA_PATH.resolve()}. Place app_data.csv.gz in the app folder."
     )
 
 df = pd.read_csv(DATA_PATH, compression="gzip")
