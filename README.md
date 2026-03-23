@@ -102,10 +102,12 @@ The application uses Inside Airbnb London data (`listings.csv.gz`):
 
 ## Model Performance
 
-The dashboard uses a tuned Random Forest regressor trained on the full dataset:
-- **RMSE (3-fold CV):** ~£75-100/night
-- **R² Score:** ~0.45-0.55
-- **Data Split:** 80% train / 20% validation
+The dashboard currently uses a tuned XGBoost regressor trained on the 99th-percentile-capped dataset:
+- **RMSE (3-fold CV):** ~88.62/night
+- **R² Score:** ~0.65
+- **Validation Strategy:** 3-fold cross-validation on capped data
+
+LightGBM remains available as a backup artifact for side-by-side comparison.
 
 ## Future Improvements
 

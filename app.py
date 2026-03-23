@@ -16,8 +16,9 @@ import plotly.graph_objects as go
 from dash import Input, Output, State, dcc, html
 
 DATA_PATH = Path("listings.csv.gz")
-MODEL_PATH = Path(os.environ.get("MODEL_PATH", "artifacts/lgb_price_model.joblib"))
-META_PATH = Path(os.environ.get("META_PATH", "artifacts/lgb_model_metadata.json"))
+MODEL_PATH = Path(os.environ.get("MODEL_PATH", "artifacts/xgb_price_model.joblib"))
+META_PATH = Path(os.environ.get("META_PATH", "artifacts/xgb_model_metadata.json"))
+XGB_META_PATH = Path(os.environ.get("XGB_META_PATH", "artifacts/xgb_model_metadata.json"))
 LEGACY_META_PATH = Path("artifacts/model_metadata.json")
 
 
@@ -61,8 +62,78 @@ with open(effective_meta_path, "r", encoding="utf-8") as f:
 
 feature_columns = metadata["feature_columns"]
 default_values = metadata["default_values"]
-residual_q05 = float(metadata.get("residual_q05", -50.0))
-residual_q95 = float(metadata.get("residual_q95", 50.0))
+
+# Force interval quantiles to come from XGBoost metadata so confidence ranges
+# always align with the deployed XGBoost model.
+if not XGB_META_PATH.exists():
+    raise FileNotFoundError(
+        "XGBoost metadata is required for interval calibration. "
+        f"Expected file: {XGB_META_PATH.resolve()}"
+    )
+
+with open(XGB_META_PATH, "r", encoding="utf-8") as f:
+    xgb_metadata = json.load(f)
+
+residual_q05 = float(xgb_metadata.get("residual_q05", -50.0))
+residual_q95 = float(xgb_metadata.get("residual_q95", 50.0))
+
+
+def run_interval_calibration_check(frame: pd.DataFrame, sample_size: int = 5000) -> None:
+    """Print a lightweight interval calibration summary at startup."""
+    if "price" not in frame.columns or not feature_columns:
+        return
+
+    eval_df = frame.copy()
+    eval_df = eval_df.dropna(subset=["price"]).copy()
+    if eval_df.empty:
+        return
+
+    if len(eval_df) > sample_size:
+        eval_df = eval_df.sample(n=sample_size, random_state=42)
+
+    y_true = pd.to_numeric(eval_df["price"], errors="coerce")
+    valid_target = y_true.notna()
+    eval_df = eval_df.loc[valid_target].copy()
+    y_true = y_true.loc[valid_target]
+    if eval_df.empty:
+        return
+
+    x_eval = pd.DataFrame(index=eval_df.index)
+    for col in feature_columns:
+        default_val = default_values.get(col, 0)
+        if col in eval_df.columns:
+            raw_series = eval_df[col]
+            if col in {"host_response_rate", "host_acceptance_rate"}:
+                raw_series = raw_series.astype(str).str.replace("%", "", regex=False)
+            if col == "host_is_superhost":
+                raw_series = raw_series.map(
+                    {"t": 1, "f": 0, True: 1, False: 0, 1: 1, 0: 0, "1": 1, "0": 0}
+                )
+
+            if isinstance(default_val, (int, float)):
+                raw_series = pd.to_numeric(raw_series, errors="coerce")
+
+            x_eval[col] = raw_series.fillna(default_val)
+        else:
+            x_eval[col] = default_val
+
+    y_pred = pd.Series(model.predict(x_eval), index=eval_df.index)
+    lower = y_pred + residual_q05
+    upper = y_pred + residual_q95
+    covered = ((y_true >= lower) & (y_true <= upper)).mean()
+    mae = (y_true - y_pred).abs().mean()
+
+    print(
+        "[Calibration] "
+        f"samples={len(x_eval):,}, "
+        f"interval_coverage={covered:.3f}, "
+        f"mae={mae:.2f}, "
+        f"residual_q05={residual_q05:.2f}, "
+        f"residual_q95={residual_q95:.2f}"
+    )
+
+
+run_interval_calibration_check(dashboard_df)
 
 
 neighbourhoods_list = sorted(dashboard_df["neighbourhood_cleansed"].dropna().unique())
@@ -281,7 +352,7 @@ app.layout = html.Div(
             [
                 html.H1("London Airbnb Nightly Price Predictor", style={"marginBottom": "10px"}),
                 html.P(
-                    "This dashboard predicts nightly prices using the trained LightGBM model exported from the notebook.",
+                    "This dashboard predicts nightly prices using the trained XGBoost model exported from the notebook.",
                     style={"color": "#444", "fontSize": "14px", "marginBottom": "8px"},
                 ),
                 html.P(
